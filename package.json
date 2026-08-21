@@ -1,0 +1,24 @@
+{
+  "name": "field-agent-checkin",
+  "version": "0.1.0",
+  "private": true,
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "build:dashboard": "bun build dashboard/src/main.tsx --outdir dashboard/dist --target browser",
+    "build": "bun run build:dashboard",
+    "eval": "bun eval/run.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/bun": "latest"
+  }
+}

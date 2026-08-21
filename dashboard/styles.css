@@ -1,0 +1,75 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, Segoe UI, Arial, sans-serif;
+  background: #f4f5f2;
+  color: #1a2020;
+}
+header {
+  padding: 16px 24px;
+  background: #1a2020;
+  color: #fff;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+header h1 { font-size: 18px; margin: 0; }
+header .meta { font-size: 13px; color: #9aa39e; font-family: monospace; }
+
+main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+
+.panel {
+  background: #fff;
+  border: 1px solid #d6dad4;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.panel h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #586158; margin: 0 0 12px; }
+
+.controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+select, button {
+  font-size: 14px;
+  padding: 6px 10px;
+  border: 1px solid #b9c0b6;
+  border-radius: 3px;
+  background: #fff;
+}
+button { cursor: pointer; background: #1a2020; color: #fff; border-color: #1a2020; }
+button:hover { background: #333; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e4e6e1; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #586158; }
+
+.tier {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+.tier-NOMINAL { background: #4f7a56; }
+.tier-SOFT_WATCH { background: #b8841b; }
+.tier-CUSTOMER_NOTIFY { background: #b8841b; }
+.tier-PEER_CHECK { background: #a83e78; }
+.tier-EMERGENCY { background: #c24a2f; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+
+.log-list { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
+.log-list li { padding: 8px 0; border-bottom: 1px solid #eef0ec; font-size: 13px; }
+.log-list .log-head { display: flex; gap: 8px; font-family: monospace; font-size: 12px; color: #586158; margin-bottom: 3px; }
+.log-list .log-body { color: #1a2020; }
+.badge-source {
+  font-family: monospace;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #eaede9;
+  color: #586158;
+}
+
+footer { text-align: center; padding: 20px; font-size: 12px; color: #9aa39e; }

@@ -1,0 +1,12 @@
+node_modules
+dashboard/dist
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.example
+.git
+.DS_Store
+*.md
+Hackathon_Brief_Unique_Project_Unique_Stack.pdf

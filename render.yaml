@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: field-agent-checkin
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SIM_SPEED
+        value: 4
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-20b
+      - key: GROQ_API_KEY
+        sync: false

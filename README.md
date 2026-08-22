@@ -23,15 +23,20 @@ bun run eval
 
 Runs the 20 scenarios in `eval/scenarios.ts` against the Stage-1 statistical filter (always) and, if `GROQ_API_KEY` is set, against the full Stage-2 reasoning agent too — printing both weighted scores side by side. The gap between them is the concrete, measured version of "why this breaks without AI."
 
-## Deployment (Fly.io, Dockerized)
+## Deployment (Render, Dockerized)
 
-```bash
-fly launch --no-deploy      # first time only; it'll detect fly.toml and the Dockerfile
-fly secrets set GROQ_API_KEY=your-key-here
-fly deploy
+Render Web Service, connected directly to this GitHub repo — it auto-detects the `Dockerfile`, no config file required. One process serves the API, WebSocket, and the dashboard's static files together, so this is the entire deployment; no separate frontend host needed.
+
+Set these in the Render dashboard's Environment tab (never commit real values):
+
+```
+PORT=8080
+SIM_SPEED=4
+GROQ_MODEL=openai/gpt-oss-20b
+GROQ_API_KEY=your-key-here
 ```
 
-Never put `GROQ_API_KEY` in `fly.toml` or commit it — `fly secrets set` is the only place it should live outside your local `.env`.
+Set the **Health Check Path** to `/health`. Free tier sleeps after ~15 minutes idle; the next request cold-starts in 30–60s — hit the URL yourself before a live demo so it's already warm.
 
 ## Project layout
 

@@ -59,7 +59,7 @@ Single-process monolith — deliberate, not a shortcut (see rationale below).
 | AI — Stage 2 | **Groq** (fast inference over open-weight models, currently `openai/gpt-oss-20b` — verified against the account's actual `/v1/models` list, not assumed; re-check at build time since Groq's lineup changes), via REST chat completions with `response_format: {type: "json_object"}` | Fast and cheap enough to run per-event rather than per-tick — keeps the cost ceiling low. Swapped in over Gemini after hitting Gemini's free-tier daily request cap during testing |
 | Dashboard | **Static React**, served by the same Bun process | One deployed process, one URL, nothing to keep in sync across two deploys |
 | Mocked services | **Everything is logged/simulated only — no real SMS, IVR, telephony, or emergency-dispatch provider is integrated anywhere, for any tier, including EMERGENCY.** Every "action" writes a structured entry to a `mock_notifications` table (recipient, channel, payload, timestamp) that the dashboard renders as a message/call log | This is a demo of the *judgment and escalation logic*, not a telephony product — introducing any real external service (Twilio or otherwise) adds dependency risk and cost for zero rubric benefit. State this plainly to judges: every notification tier is real logic behind a mocked channel |
-| Deploy | **Fly.io**, Dockerized single container | A Dockerfile pins the exact Bun version and gives full control over the build — avoids Fly's buildpack auto-detection guessing wrong and failing mid-deploy. See Dockerfile note below |
+| Deploy | **Render**, Dockerized Web Service | A Dockerfile pins the exact Bun version and gives full control over the build. Render connects directly to the GitHub repo and auto-detects the Dockerfile — no separate config file needed. See Dockerfile note below |
 
 **Why a monolith, not microservices (say this explicitly to judges):** a production version of this system would likely use a message broker, a real time-series store, and a distributed job queue. At 10 simulated riders in a 24-hour build, that architecture adds setup risk with zero visible demo payoff. The migration path (Redis-backed queue, Postgres, real time-series DB) is the answer to "what breaks at 10,000 riders" ([§13](#13-the-five-questions--prepared-answers)), not a gap in this build.
 
@@ -78,7 +78,7 @@ EXPOSE 8080
 CMD ["bun", "run", "src/index.ts"]
 ```
 
-Pin the Bun image tag (`oven/bun:1`, or a specific minor version once you know it), build and run this exact image locally before ever pushing to Fly — `fly deploy` should then be a non-event. `fly.toml` just points at this Dockerfile; no buildpack guessing involved.
+Pin the Bun image tag (`oven/bun:1`, or a specific minor version once you know it). Render builds this Dockerfile directly on push — no separate config file to keep in sync, no buildpack guessing involved. Set the Health Check Path to `/health` in Render's dashboard.
 
 ---
 
@@ -289,7 +289,7 @@ Resolved:
 - **Rider count for the simulator** — 10.
 - **External services** — none. Everything mocked/logged, no Twilio or any other real telephony/SMS provider, no real emergency-dispatch integration, ever.
 - **AI provider** — Groq, replacing Gemini after hitting Gemini's free-tier daily request cap during live testing (20 requests/day was unworkable for a hackathon demo). Groq's free tier is far more generous for this workload.
-- **Deployment** — Fly.io, Dockerized (Dockerfile in [§3](#3-architecture--tech-stack)).
+- **Deployment** — Render Web Service, Dockerized (Dockerfile in [§3](#3-architecture--tech-stack)). Switched from Fly.io, which requires a payment method on file before it'll deploy even within the free allowance.
 
 Still open:
 

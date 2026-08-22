@@ -32,6 +32,12 @@ export function createServer(port: number, handlers: ServerHandlers) {
         return new Response("WebSocket upgrade failed", { status: 400 });
       }
 
+      // Deliberately independent of simulation/engine state — a health check should
+      // answer "is the process alive" fast, not "is the simulation behaving correctly."
+      if (url.pathname === "/health" && req.method === "GET") {
+        return Response.json({ status: "ok", uptimeSec: process.uptime() });
+      }
+
       if (url.pathname === "/api/state" && req.method === "GET") {
         return Response.json(handlers.getSnapshot());
       }

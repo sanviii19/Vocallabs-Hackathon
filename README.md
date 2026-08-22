@@ -8,7 +8,7 @@ Autonomous silence-interpretation agent for a delivery fleet. Full design ration
 
 ```bash
 bun install
-cp .env.example .env      # then set GEMINI_API_KEY (optional — falls back to deterministic rules without it)
+cp .env.example .env      # then set GROQ_API_KEY (optional — falls back to deterministic rules without it)
 bun run build              # builds the dashboard bundle into dashboard/dist
 bun run dev                 # starts the server with auto-reload at http://localhost:8080
 ```
@@ -21,17 +21,17 @@ Open `http://localhost:8080`. Use the demo controls to inject a single incident 
 bun run eval
 ```
 
-Runs the 20 scenarios in `eval/scenarios.ts` against the Stage-1 statistical filter (always) and, if `GEMINI_API_KEY` is set, against the full Stage-2 reasoning agent too — printing both weighted scores side by side. The gap between them is the concrete, measured version of "why this breaks without AI."
+Runs the 20 scenarios in `eval/scenarios.ts` against the Stage-1 statistical filter (always) and, if `GROQ_API_KEY` is set, against the full Stage-2 reasoning agent too — printing both weighted scores side by side. The gap between them is the concrete, measured version of "why this breaks without AI."
 
 ## Deployment (Fly.io, Dockerized)
 
 ```bash
 fly launch --no-deploy      # first time only; it'll detect fly.toml and the Dockerfile
-fly secrets set GEMINI_API_KEY=your-key-here
+fly secrets set GROQ_API_KEY=your-key-here
 fly deploy
 ```
 
-Never put `GEMINI_API_KEY` in `fly.toml` or commit it — `fly secrets set` is the only place it should live outside your local `.env`.
+Never put `GROQ_API_KEY` in `fly.toml` or commit it — `fly secrets set` is the only place it should live outside your local `.env`.
 
 ## Project layout
 
@@ -39,7 +39,7 @@ Never put `GEMINI_API_KEY` in `fly.toml` or commit it — `fly secrets set` is t
 src/
   simulator/   synthetic riders, zones, routes, incident/outage injection
   engine/      state machine, Stage-1 statistical filter, cluster-silence guard
-  ai/          Stage-2 Gemini client + prompt/schema
+  ai/          Stage-2 Groq client + prompt
   actions/     mock notification executors (logged only)
   db/          SQLite schema
   server.ts    HTTP + WebSocket

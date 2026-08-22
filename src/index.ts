@@ -5,7 +5,7 @@ import { createServer } from "./server";
 import type { DecisionLogEntry, MockNotification, StateSnapshot } from "./types";
 
 const PORT = Number(process.env.PORT) || 8080;
-const SIM_SPEED = Number(process.env.SIM_SPEED) || 12; // simulated seconds per real second
+const SIM_SPEED = Number(process.env.SIM_SPEED) || 4; // simulated seconds per real second
 const TICK_MS = 500;
 const RIDER_COUNT = 10;
 
@@ -98,6 +98,6 @@ setInterval(() => {
 }, TICK_MS);
 
 console.log(`Field Agent Check-In running at http://localhost:${PORT}`);
-console.log(`GEMINI_API_KEY ${process.env.GEMINI_API_KEY ? "set" : "NOT set — Stage-2 will fall back to deterministic rules"}`);
+console.log(`GROQ_API_KEY ${process.env.GROQ_API_KEY ? "set" : "NOT set — Stage-2 will fall back to deterministic rules"}`);
 
 export { server };

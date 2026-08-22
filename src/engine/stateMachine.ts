@@ -3,7 +3,7 @@ import type { Rider, RiderRuntimeState, Tier, DecisionLogEntry, MockNotification
 import type { PingEvent } from "../simulator/simulator";
 import { getZone } from "../simulator/zones";
 import { anomalyScore, fallbackTier } from "./stage1";
-import { assessWithGemini, type Stage2Evidence } from "../ai/gemini";
+import { assessWithGroq, type Stage2Evidence } from "../ai/groq";
 import { runTierAction, clusterOutageNotification } from "../actions/mockActions";
 
 const GRACE_SEC = 5; // don't evaluate until silence exceeds this — avoids reacting to ping jitter
@@ -157,7 +157,7 @@ export class Engine {
       batteryPct: rider.batteryPct,
     };
 
-    const result = await assessWithGemini(evidence);
+    const result = await assessWithGroq(evidence);
     // Re-check: a ping may have arrived (rider resolved/resumed) while the network call
     // was in flight. Compare lastPingAt rather than tier — tier can legitimately still be
     // NOMINAL both before *and* after a real resolution (it started there too).

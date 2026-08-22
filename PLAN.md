@@ -56,7 +56,7 @@ Single-process monolith — deliberate, not a shortcut (see rationale below).
 | Runtime | **Bun + TypeScript** | Zero-config TS (no build-step friction), built-in SQLite driver, built-in WebSocket, built-in test runner — removes most of the setup tax that eats the first hours of a hackathon |
 | Persistence | **SQLite** (`bun:sqlite`) | One file, zero ops. At 10 riders over a one-day demo window, a distributed datastore buys nothing visible |
 | Realtime push | **Native WebSocket**, same process | No message broker needed at this scale |
-| AI — Stage 2 | **Google Gemini** (Flash-tier model — cheapest/fastest tier available at build time; check current model names in Google AI Studio, they change often), via the `@google/genai` SDK or REST, forced JSON output via `responseMimeType: "application/json"` + `responseSchema` | Cheap and fast enough to run per-event rather than per-tick — keeps the cost ceiling low. Swapped in over Claude/Anthropic per your existing key access |
+| AI — Stage 2 | **Groq** (fast inference over open-weight models, currently `openai/gpt-oss-20b` — verified against the account's actual `/v1/models` list, not assumed; re-check at build time since Groq's lineup changes), via REST chat completions with `response_format: {type: "json_object"}` | Fast and cheap enough to run per-event rather than per-tick — keeps the cost ceiling low. Swapped in over Gemini after hitting Gemini's free-tier daily request cap during testing |
 | Dashboard | **Static React**, served by the same Bun process | One deployed process, one URL, nothing to keep in sync across two deploys |
 | Mocked services | **Everything is logged/simulated only — no real SMS, IVR, telephony, or emergency-dispatch provider is integrated anywhere, for any tier, including EMERGENCY.** Every "action" writes a structured entry to a `mock_notifications` table (recipient, channel, payload, timestamp) that the dashboard renders as a message/call log | This is a demo of the *judgment and escalation logic*, not a telephony product — introducing any real external service (Twilio or otherwise) adds dependency risk and cost for zero rubric benefit. State this plainly to judges: every notification tier is real logic behind a mocked channel |
 | Deploy | **Fly.io**, Dockerized single container | A Dockerfile pins the exact Bun version and gives full control over the build — avoids Fly's buildpack auto-detection guessing wrong and failing mid-deploy. See Dockerfile note below |
@@ -178,7 +178,7 @@ incidents      rider_id, opened_ts, resolved_ts, final_tier, resolution_reason
 /src
   /simulator   synthetic riders, zone/route generator, incident injector
   /engine      state machine, scheduler, Stage-1 anomaly scorer, cluster-silence check
-  /ai          Stage-2 prompt, JSON schema, Gemini client
+  /ai          Stage-2 prompt, Groq client
   /actions     tier executors — mock logger only, writes to `mock_notifications`
   /db          SQLite schema + queries
   /eval        20 scenario fixtures + scorer script
@@ -193,7 +193,7 @@ Shared `RiderState` / `Tier` / `Event` types are the first thing committed (targ
 
 Two people, both working from the shared-types commit onward. Split along the natural seam in the architecture: the logic core vs. everything that observes and validates it.
 
-1. **Core owner** — simulator, state machine, scheduler, Stage-1 statistical filter, Stage-2 Gemini integration, cluster-silence guard, threshold calibration. This is the tightly-coupled half: Stage 2's output feeds directly into state transitions, so keeping the whole decision pipeline with one person avoids handoff friction mid-build.
+1. **Core owner** — simulator, state machine, scheduler, Stage-1 statistical filter, Stage-2 Groq integration, cluster-silence guard, threshold calibration. This is the tightly-coupled half: Stage 2's output feeds directly into state transitions, so keeping the whole decision pipeline with one person avoids handoff friction mid-build.
 2. **Product owner** — dashboard (WebSocket client, synthetic grid view, per-rider decision timeline), eval harness + the 20 scenario fixtures, mock action executors/`mock_notifications` rendering, incident report generator, failure log and pitch prep.
 
 Interface between the two: the shared `RiderState`/`Tier`/`Event` types (committed Hour 3–4) plus the WebSocket message schema — agree on both before splitting off, since they're the only things each side depends on from the other.
@@ -214,7 +214,7 @@ Mapped against the brief's own compulsory checkpoints. From Hour 3 onward, read 
 | 06–10 | Stage-1 CDF/traversal-buffer filter wired to real transitions; SOFT_WATCH/CUSTOMER_NOTIFY firing correctly on synthetic data, no LLM call yet |
 | 10–12 | **Eval harness built now, before the curveball** — you want a working baseline score to compare against after Hour 12 changes anything |
 | 12:00 | **The curveball.** Expect it to test generalization — this is exactly what Stage 2 exists for |
-| 12–18 | Stage-2 Gemini integration, PEER_CHECK + EMERGENCY tiers, cluster-silence pre-check, mocked action executors |
+| 12–18 | Stage-2 Groq integration, PEER_CHECK + EMERGENCY tiers, cluster-silence pre-check, mocked action executors |
 | 18:00 | **Checkpoint 2** — full loop must run live: inject an incident, watch it walk NOMINAL → EMERGENCY on the dashboard |
 | 18–22 | Dashboard polish (read-only, no buttons — say this explicitly to judges), failure log written honestly (Tier-3 autonomy tradeoff goes here, see [§15](#15-known-risks--failure-log-seed)) |
 | 22:00 | Code freeze |
@@ -288,11 +288,11 @@ Resolved:
 - **Team size** — 2 people. Roles split in [§9](#9-team-roles).
 - **Rider count for the simulator** — 10.
 - **External services** — none. Everything mocked/logged, no Twilio or any other real telephony/SMS provider, no real emergency-dispatch integration, ever.
-- **AI provider** — Google Gemini (Flash-tier), replacing Claude/Anthropic in the stack.
+- **AI provider** — Groq, replacing Gemini after hitting Gemini's free-tier daily request cap during live testing (20 requests/day was unworkable for a hackathon demo). Groq's free tier is far more generous for this workload.
 - **Deployment** — Fly.io, Dockerized (Dockerfile in [§3](#3-architecture--tech-stack)).
 
 Still open:
 
-- **Gemini API key** — confirm access is ready before Hour 3, and confirm the current cheapest/fastest model name available in Google AI Studio at build time (model names/tiers change frequently — don't hardcode one into the plan sight unseen).
+- **Groq API key** — confirm access is ready before Hour 3, and confirm the current recommended model name at console.groq.com/docs/models at build time (this list changes — don't hardcode one into the plan sight unseen).
 - **Dashboard map style** — synthetic grid (recommended, faster, zero API-key risk) vs. a real map library.
 - **Constraints to formally declare on the submission form** — proposed as "Degrades gracefully" + "Handle being wrong" unless you want to swap in a different pair.

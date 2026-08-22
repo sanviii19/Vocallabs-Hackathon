@@ -1,6 +1,6 @@
 import { getZone } from "../src/simulator/zones";
 import { anomalyScore, fallbackTier } from "../src/engine/stage1";
-import { assessWithGemini, type Stage2Evidence } from "../src/ai/gemini";
+import { assessWithGroq, type Stage2Evidence } from "../src/ai/groq";
 import { SCENARIOS, type Category } from "./scenarios";
 import type { Tier } from "../src/types";
 
@@ -36,9 +36,9 @@ function pad(s: string, n: number) {
 }
 
 async function main() {
-  const hasKey = !!process.env.GEMINI_API_KEY;
+  const hasKey = !!process.env.GROQ_API_KEY;
   console.log(`\nField Agent Check-In — Eval Harness (${SCENARIOS.length} scenarios)`);
-  console.log(hasKey ? "GEMINI_API_KEY set — running both Stage-1-only and full Stage-2 passes.\n" : "GEMINI_API_KEY not set — showing Stage-1-only (fallback) results only.\n");
+  console.log(hasKey ? "GROQ_API_KEY set — running both Stage-1-only and full Stage-2 passes.\n" : "GROQ_API_KEY not set — showing Stage-1-only (fallback) results only.\n");
 
   console.log(
     pad("ID", 4) + pad("Category", 12) + pad("Zone", 18) + pad("t(s)", 6) + pad("Accel", 6) +
@@ -75,7 +75,7 @@ async function main() {
         accelFlag: sc.accelFlag,
         batteryPct: 80,
       };
-      const result = await assessWithGemini(evidence);
+      const result = await assessWithGroq(evidence);
       const s2Tier = result?.tierRecommendation ?? fbTier;
       const s2Pass = passes(sc.category, s2Tier, "stage2");
       if (s2Pass) stage2WeightedPass += weight;
@@ -99,7 +99,7 @@ async function main() {
     );
   } else {
     const stage2Only = SCENARIOS.filter((s) => s.requiresStage2).map((s) => s.id).join(", ");
-    console.log(`\nSet GEMINI_API_KEY and re-run to see the full Stage-2 pass — scenarios ${stage2Only} are designed to fail Stage-1 alone.`);
+    console.log(`\nSet GROQ_API_KEY and re-run to see the full Stage-2 pass — scenarios ${stage2Only} are designed to fail Stage-1 alone.`);
   }
 }
 

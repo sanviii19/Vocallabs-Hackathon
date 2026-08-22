@@ -2,5 +2,7 @@ node_modules
 dashboard/dist
 *.sqlite
 *.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 .env
 .DS_Store

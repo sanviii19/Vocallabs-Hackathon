@@ -37,6 +37,7 @@ select, button {
 }
 button { cursor: pointer; background: #1a2020; color: #fff; border-color: #1a2020; }
 button:hover { background: #333; }
+button:disabled { cursor: not-allowed; background: #b9c0b6; border-color: #b9c0b6; color: #eee; }
 
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e4e6e1; }

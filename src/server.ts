@@ -4,6 +4,8 @@ export interface ServerHandlers {
   getSnapshot: () => StateSnapshot;
   injectIncident: (riderId: string) => void;
   injectOutage: (zoneId: string) => void;
+  start: () => void;
+  stop: () => void;
 }
 
 export function createServer(port: number, handlers: ServerHandlers) {
@@ -45,6 +47,18 @@ export function createServer(port: number, handlers: ServerHandlers) {
         const body = (await req.json()) as { zoneId?: string };
         if (!body.zoneId) return new Response("zoneId required", { status: 400 });
         handlers.injectOutage(body.zoneId);
+        return Response.json({ ok: true });
+      }
+
+      if (url.pathname === "/api/start" && req.method === "POST") {
+        handlers.start();
+        broadcast({ type: "snapshot", data: handlers.getSnapshot() });
+        return Response.json({ ok: true });
+      }
+
+      if (url.pathname === "/api/stop" && req.method === "POST") {
+        handlers.stop();
+        broadcast({ type: "snapshot", data: handlers.getSnapshot() });
         return Response.json({ ok: true });
       }
 

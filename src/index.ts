@@ -61,10 +61,15 @@ const engine = new Engine(simulator.getRiders(), {
   },
 });
 
+// Simulation starts paused — the dashboard's Start button is what actually sets this
+// true. Nothing (pings, decisions, notifications) advances while stopped; everything
+// resumes exactly where it left off, since the tick body below simply no-ops.
+let running = false;
+
 function getSnapshot(): StateSnapshot {
   return {
     simTime: simulator.getSimTime(),
-    running: true,
+    running,
     zones: simulator.listZones(),
     riders: simulator.getRiders(),
     runtime: engine.getRuntimeArray(),
@@ -77,10 +82,18 @@ const { server, broadcast } = createServer(PORT, {
   getSnapshot,
   injectIncident: (riderId) => simulator.injectIncident(riderId),
   injectOutage: (zoneId) => simulator.injectZoneOutage(zoneId),
+  start: () => {
+    running = true;
+  },
+  stop: () => {
+    running = false;
+  },
 });
 broadcastRef = broadcast;
 
 setInterval(() => {
+  if (!running) return;
+
   const dt = SIM_SPEED * (TICK_MS / 1000);
   const events = simulator.tick(dt);
 

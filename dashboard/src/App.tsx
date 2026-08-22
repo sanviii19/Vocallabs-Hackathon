@@ -12,6 +12,7 @@ const MAX_LOG = 60;
 
 export function App() {
   const [connected, setConnected] = useState(false);
+  const [running, setRunning] = useState(false);
   const [simTime, setSimTime] = useState(0);
   const [zones, setZones] = useState<Zone[]>([]);
   const [riders, setRiders] = useState<Record<string, Rider>>({});
@@ -34,6 +35,7 @@ export function App() {
       const msg: ServerMessage = JSON.parse(evt.data);
       if (msg.type === "snapshot") {
         setSimTime(msg.data.simTime);
+        setRunning(msg.data.running);
         setZones(msg.data.zones);
         setRiders(Object.fromEntries(msg.data.riders.map((r) => [r.id, r])));
         setRuntime(Object.fromEntries(msg.data.runtime.map((r) => [r.riderId, r])));
@@ -54,6 +56,14 @@ export function App() {
     return () => ws.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function startSimulation() {
+    await fetch("/api/start", { method: "POST" });
+  }
+
+  async function stopSimulation() {
+    await fetch("/api/stop", { method: "POST" });
+  }
 
   async function injectIncident() {
     if (!selectedRider) return;
@@ -80,6 +90,7 @@ export function App() {
       <header>
         <h1>Field Agent Check-In</h1>
         <span className="meta">sim t={Math.floor(simTime)}s</span>
+        <span className={`tier ${running ? "tier-NOMINAL" : "tier-PEER_CHECK"}`}>{running ? "RUNNING" : "STOPPED"}</span>
         <span className="meta">{connected ? "connected" : "disconnected"}</span>
       </header>
 
@@ -87,20 +98,55 @@ export function App() {
         <section className="panel">
           <h2>Demo Controls (test harness only — not a dispatcher approval step)</h2>
           <div className="controls">
+            <button onClick={startSimulation} disabled={running}>Start Simulation</button>
+            <button onClick={stopSimulation} disabled={!running}>Stop Simulation</button>
+          </div>
+          <div className="controls" style={{ marginTop: 10 }}>
             <select value={selectedRider} onChange={(e) => setSelectedRider(e.target.value)}>
               {riderList.map((r) => (
                 <option key={r.id} value={r.id}>{r.name} ({r.id})</option>
               ))}
             </select>
-            <button onClick={injectIncident}>Inject Incident</button>
+            <button onClick={injectIncident} disabled={!running}>Inject Incident</button>
 
             <select value={selectedZone} onChange={(e) => setSelectedZone(e.target.value)}>
               {zones.map((z) => (
                 <option key={z.id} value={z.id}>{z.name}</option>
               ))}
             </select>
-            <button onClick={injectOutage}>Simulate Zone Outage</button>
+            <button onClick={injectOutage} disabled={!running}>Simulate Zone Outage</button>
           </div>
+        </section>
+
+        <section className="panel">
+          <h2>What The Tiers Mean</h2>
+          <table>
+            <thead>
+              <tr><th>Tier</th><th>Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span className="tier tier-NOMINAL">NOMINAL</span></td>
+                <td>Pinging in as expected. Nothing to watch.</td>
+              </tr>
+              <tr>
+                <td><span className="tier tier-SOFT_WATCH">SOFT_WATCH</span></td>
+                <td>Silence is running a bit longer than this spot's usual dead-zone pattern. System sent a quiet "tap to confirm you're safe" check and is watching — no one else is told yet.</td>
+              </tr>
+              <tr>
+                <td><span className="tier tier-CUSTOMER_NOTIFY">CUSTOMER_NOTIFY</span></td>
+                <td>Still unresolved. The customer's been sent a "delivery delayed, we're monitoring" message so they aren't left wondering.</td>
+              </tr>
+              <tr>
+                <td><span className="tier tier-PEER_CHECK">PEER_CHECK</span></td>
+                <td>Anomaly is high enough (or nothing resolved in time) that the nearest other rider has been asked to physically look for them.</td>
+              </tr>
+              <tr>
+                <td><span className="tier tier-EMERGENCY">EMERGENCY</span></td>
+                <td>High-confidence incident. Automated call to the rider, then to their emergency contact, then an incident report is filed — all simulated/logged in this demo, no real call or SMS is sent.</td>
+              </tr>
+            </tbody>
+          </table>
         </section>
 
         <section className="panel">
